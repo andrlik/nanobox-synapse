@@ -1,0 +1,8 @@
+coturn/*
+logs/*
+*.crt
+*.key
+*.dh
+homeserver*.yml
+*.db
+etc/turnserver.conf

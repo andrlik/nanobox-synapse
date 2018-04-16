@@ -1,0 +1,47 @@
+run.config:
+  engine: python
+  engine.config:
+    runtime: python-2.7
+    
+  extra_packages:
+    - sqlite3
+    - libffi
+    - libjpeg-turbo
+    - libxslt
+    - nginx
+    - py27-psycopg2
+    - gnu-crypto
+    - libevent
+
+  extra_steps:
+    - pip install --upgrade pip
+    - pip install --upgrade setuptools
+    - pip install https://github.com/matrix-org/synapse/tarball/master
+    - PREFIX=/data BINDIR=/data/bin CONFDIR=/app/etc /app/install_coturn.sh
+ 
+web.site:
+  start:
+    #process1: /data/bin/turnserver -o
+    process2: synctl start homeserver.yml
+  stop:
+    process2: synctl stop homeserver.yml
+    #process1: killall -9 turnserver
+
+  
+  writable_dirs:
+    - logs/synapse
+    - logs/coturn
+
+deploy.config:
+  extra_steps:
+    - mv homeserver-prod.yml homserver.yml
+  transform:
+    - 'sed -i s/HOST/$DATA_DB_HOST/g homeserver.yml'
+    - 'sed -i s/DB_USER/$DATA_DB_USER/g homeserver.yml'
+    - 'sed -i s/DB_PASSWORD/$DATA_DB_PASS/g homeserver.yml'
+    - 'sed -i s/REGISTRATION_SHARED_SECRET/$REGISTRATION_SECRET/g homeserver.yml'
+    - 'sed -i s/YOUR_SHARED_SECRET/$TURN_SECRET_KEY/g homeserver.yml'
+    - 'sed -i s/YOUR_SHARED_SECRET/$TURN_SECRET_KEY/g etc/turnserver.conf'
+
+data.db:
+  image: nanobox/postgresql:10-beta
