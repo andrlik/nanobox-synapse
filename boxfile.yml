@@ -21,27 +21,56 @@ run.config:
  
 web.site:
   start:
-    #process1: /data/bin/turnserver -o
-    process2: synctl start homeserver.yml
+    turnserver: turnserver
+    synapse: python -m synapse.app.homeserver -c /app/etc/homeserver.yaml
+    nginx: nginx -c /app/etc/nginx.conf
   stop:
-    process2: synctl stop homeserver.yml
-    #process1: killall -9 turnserver
+    synapse: synctl stop /app/etc/homeserver.yaml
+    turnserver: kill $(cat /app/run/turnserver.pid)
+    nginx: nginx -c /app/etc/nginx.conf -s stop
+  stop_force:
+    synapse: true
+    turnserver: true
+    nginx: true
+  stop_timeout:
+    synapse: 60
+    nginx: 60
+    turnserver: 10
 
-  
+  network_dirs:
+    data.uploads:
+      - uploads
+    data.mediastore:
+      - media_store
   writable_dirs:
-    - logs/synapse
-    - logs/coturn
+    - logs
+    - run
+  log_watch:
+    synapse: 'logs/homeserver.log'
+    nginx: 'logs/nginx_error.log'
+    turnserver: 'logs/turnserver.log'
+  ports:
+    - udp:3478:3478
+    - tcp:3478:3478
+    - tcp:8448:8448
 
 deploy.config:
-  extra_steps:
-    - mv homeserver-prod.yml homserver.yml
   transform:
-    - 'sed -i s/HOST/$DATA_DB_HOST/g homeserver.yml'
-    - 'sed -i s/DB_USER/$DATA_DB_USER/g homeserver.yml'
-    - 'sed -i s/DB_PASSWORD/$DATA_DB_PASS/g homeserver.yml'
-    - 'sed -i s/REGISTRATION_SHARED_SECRET/$REGISTRATION_SECRET/g homeserver.yml'
-    - 'sed -i s/YOUR_SHARED_SECRET/$TURN_SECRET_KEY/g homeserver.yml'
+    - 'sed -i s/HOST/$DATA_DB_HOST/g etc/homeserver.yaml'
+    - 'sed -i s/DB_USER/$DATA_DB_USER/g etc/homeserver.yaml'
+    - 'sed -i s/DB_PASSWORD/$DATA_DB_PASS/g etc/homeserver.yaml'
+    - 'sed -i s/REGISTRATION_SHARED_SECRET/$REGISTRATION_SECRET/g etc/homeserver.yaml'
+    - 'sed -i s/YOUR_SHARED_SECRET/$TURN_SECRET_KEY/g etc/homeserver.yaml'
     - 'sed -i s/YOUR_SHARED_SECRET/$TURN_SECRET_KEY/g etc/turnserver.conf'
-
+    - 'sed -i s/YOUR_TURN_REALM/$TURN_REALM/g etc/turnserver.conf'
+    - 'sed -i s/YOUR_TURN_REALM/$TURN_REALM/g etc/homeserver.yaml'
+    
 data.db:
   image: nanobox/postgresql:10-beta
+
+data.uploads:
+  image: nanobox/unfs:0.9
+
+data.mediastore:
+  image: nanobox/unfs:0.9
+

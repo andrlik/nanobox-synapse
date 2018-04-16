@@ -3,6 +3,11 @@ logs/*
 *.crt
 *.key
 *.dh
-homeserver*.yml
 *.db
 etc/turnserver.conf
+etc/homeserver.yaml
+etc/synapse.andrlik.org.log.config
+run/*.pid
+logs/*.log
+.#*
+
