@@ -112,4 +112,10 @@ Most of this works quite well, although I still need to do more testing on the t
 [contrib]: https://github.com/andrlik/nanobox-synapse/CONTRIBUTING.md
 [coc]: https://github.com/andrlik/nanobox-synapse/CODE_OF_CONDUCT.md
 
+## Need Help?
+
+If you need help, drop into [#nanobox-synapse-users:synapse.andrlik.org][nsu] to ask for assistance, or if you believe you have found a bug file an [issue][ghi].
+
+[nsu]: https://synapse.andrlik.org/_matrix/client/#/room/!jxrknrxhpmVWZpUnTD:synapse.andrlik.org
+[ghi]: https://github.com/andrlik/nanobox-synapse/issues/
 
