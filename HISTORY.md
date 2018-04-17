@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 0.1.3 2018-04-17
+
+### Changes
+
+* Force SSL everywhere.
+
+### Known Issues
+
+* VOIP/Video suport is present but untested.
+
 ## 0.1.2 2018-04-17
 
 ### Changes
