@@ -6,6 +6,21 @@ Deploying a matrix server is not trivial. This project should make it significan
 
 [1]: #caveats
 
+Table of Contents
+=================
+
+* [Prerequisites](#prerequisites)
+* [Quickstart](#quickstart)
+  * [Generate initial config](#generate-initial-config)
+  * [Configure turnserver](#configure-turnserver)
+  * [Decide on backups](#decide-on-backups)
+  * [Connect the app](#connect-the-app)
+  * [Add envrironment variables.](#add-envrironment-variables)
+  * [Do a dry run.](#do-a-dry-run)
+  * [Deploy](#deploy)
+* [Caveats](#caveats)
+* [Need Help?](#need-help)
+
 ## Prerequisites
 
 Create a [Nanobox account][nano] and install the runtime for your machine. Make sure to [link your preferred hosting provider][prov] to your account. 
@@ -76,15 +91,30 @@ enable_group_creation: true
 
 That's it.
 
+### Decide on backups
+
+By default, this repo ships with automatic data backups enabled. They are configured per [this support article][bunano] from the Nanobox team. At 3am, it backs up all data locally and then syncs said data to Amazon S3. If don't want to do that and want to live dangerously, you can comment out or remove the cron sections of each data element. If you **do** want to have backups synced to S3, you'll need to set the following envrironment variables (instructions cribbed from the aforementioned article).
+
+```bash
+nanobox evar add AWS_ACCESS_KEY_ID={key}  
+nanobox evar add AWS_SECRET_ACCESS_KEY={secret}  
+nanobox evar add AWS_DEFAULT_REGION=us-west-2  
+nanobox evar add AWS_S3_BACKUP_BUCKET={app-name}-backups
+```
+
+[bunano]: https://content.nanobox.io/data-safety-with-nanobox-backup-and-recovery/
+
 ### Connect the app
 
 On the Nanobox dashboard, create an app with your hosting provider. **Make sure to enable SSL.** Note the app name, and then enter the following: `nanobox remote add your_app_name`.
 
 ### Add envrironment variables.
 
-`nanobox evar add TURN_REALM=TURN.YOUR.DOMAIN`
-`nanobox evar add REGISTRATION_SECRET="[A RANDOM SECRET KEY]"`
-`nanobox evar add TURN_SECRET="[ANOTHER RANDOM SECRET KEY]"`
+```bash
+nanobox evar add TURN_REALM=TURN.YOUR.DOMAIN
+nanobox evar add REGISTRATION_SECRET="[A RANDOM SECRET KEY]"
+nanobox evar add TURN_SECRET="[ANOTHER RANDOM SECRET KEY]"
+```
 
 ### Do a dry run.
 
@@ -108,8 +138,14 @@ Synapse, Matrix, Riot, and associated projects are all young technologies and ma
 
 Most of this works quite well, although I still need to do more testing on the turnserver to make sure VOIP/Video is working correctly.
 
-[docs]: https://github.com/matrix-org/synapse/README.md
-[contrib]: https://github.com/andrlik/nanobox-synapse/CONTRIBUTING.md
-[coc]: https://github.com/andrlik/nanobox-synapse/CODE_OF_CONDUCT.md
+[docs]: https://github.com/matrix-org/synapse/blob/master/README.md
+[contrib]: https://github.com/andrlik/nanobox-synapse/blob/master/CONTRIBUTING.md
+[coc]: https://github.com/andrlik/nanobox-synapse/blob/master/CODE_OF_CONDUCT.md
 
+## Need Help?
+
+If you need help, drop into [#nanobox-synapse-users:synapse.andrlik.org][nsu] to ask for assistance, or if you believe you have found a bug file an [issue][ghi].
+
+[nsu]: https://synapse.andrlik.org/_matrix/client/#/room/!jxrknrxhpmVWZpUnTD:synapse.andrlik.org
+[ghi]: https://github.com/andrlik/nanobox-synapse/issues/
 
