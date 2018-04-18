@@ -6,6 +6,7 @@ run.config:
   extra_packages:
     - sqlite3
     - libffi
+    - py27-lxml
     - libjpeg-turbo
     - libxslt
     - nginx
