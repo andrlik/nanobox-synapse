@@ -6,6 +6,7 @@ run.config:
   extra_packages:
     - sqlite3
     - libffi
+    - py27-lxml
     - libjpeg-turbo
     - libxslt
     - nginx
@@ -68,9 +69,88 @@ deploy.config:
 data.db:
   image: nanobox/postgresql:10-beta
 
+  extra_packages:
+    - py27-awscli
+
+  cron:
+    - id: backup
+      schedule: '0 3 * * *'
+      command: |
+        date=$(date -u +%Y-%m-%d.%H-%M-%S)
+        (
+          PGPASSWORD=${DATA_DB_PASS} pg_dump -w -Fc -O -U ${DATA_DB_USER} gonano |
+          gzip |
+          tee >(cat - >&4) |
+          curl -k -H "X-AUTH-TOKEN: ${WAREHOUSE_DATA_HOARDER_TOKEN}" https://${WAREHOUSE_DATA_HOARDER_HOST}:7410/blobs/backup-${HOSTNAME}-${date}.sql.gz -X POST -T - >&2
+        ) 4>&1 |
+        aws s3 cp - s3://${AWS_S3_BACKUP_BUCKET}/${APP_NAME}-backup-${HOSTNAME}-${date}.sql.gz
+        curl -k -s -H "X-AUTH-TOKEN: ${WAREHOUSE_DATA_HOARDER_TOKEN}" https://${WAREHOUSE_DATA_HOARDER_HOST}:7410/blobs/ |
+        sed 's/,/\n/g' |
+        grep ${HOSTNAME} |
+        sort |
+        head -n-${BACKUP_COUNT:-1} |
+        sed 's/.*: \?"(.*\)".*/\1/' |
+        while read file
+        do
+          curl -k -H "X-AUTH-TOKEN: ${WAREHOUSE_DATA_HOARDER_TOKEN}" https://${WAREHOUSE_DATA_HOARDER_HOST}:7410/blobs/${file} -X DELETE
+          aws s3 rm s3://${AWS_S3_BACKUP_BUCKET}/${APP_NAME}-${file}
+        done
+      
+
 data.uploads:
   image: nanobox/unfs:0.9
+
+  extra_packages:
+    - py27-awscli
+
+  cron:
+    - id: backup
+      schedule: '0 3 * * *'
+      command: |
+        date=$(date -u +%Y-%m-%d.%H-%M-%S)
+        (
+          tar cz -C /data/var/db/unfs/ . |
+          tee >(cat - >&4) |
+          curl -k -H "X-AUTH-TOKEN: ${WAREHOUSE_DATA_HOARDER_TOKEN}" https://${WAREHOUSE_DATA_HOARDER_HOST}:7410/blobs/backup-${HOSTNAME}-${date}.tgz -X POST -T - >&2
+        ) 4>&1 |
+        aws s3 cp - s3://${AWS_S3_BACKUP_BUCKET}/${APP_NAME}-backup-${HOSTNAME}-${date}.tgz
+        curl -k -s -H "X-AUTH-TOKEN: ${WAREHOUSE_DATA_HOARDER_TOKEN}" https://${WAREHOUSE_DATA_HOARDER_HOST}:7410/blobs/ |
+        sed 's/,/\n/g' |
+        grep ${HOSTNAME} |
+        sort |
+        head -n-${BACKUP_COUNT:-1} |
+        sed 's/.*: \?"\(.*\)".*/\1/' |
+        while read file
+        do
+          curl -k -H "X-AUTH-TOKEN: ${WAREHOUSE_DATA_HOARDER_TOKEN}" https://${WAREHOUSE_DATA_HOARDER_HOST}:7410/blobs/${file} -X DELETE
+          aws s3 rm s3://${AWS_S3_BACKUP_BUCKET}/${APP_NAME}-${file}
+        done
 
 data.mediastore:
   image: nanobox/unfs:0.9
 
+  extra_packages:
+    - py27-awscli
+
+  cron:
+    - id: backup
+      schedule: '0 3 * * *'
+      command: |
+        date=$(date -u +%Y-%m-%d.%H-%M-%S)
+        (
+          tar cz -C /data/var/db/unfs/ . |
+          tee >(cat - >&4) |
+          curl -k -H "X-AUTH-TOKEN: ${WAREHOUSE_DATA_HOARDER_TOKEN}" https://${WAREHOUSE_DATA_HOARDER_HOST}:7410/blobs/backup-${HOSTNAME}-${date}.tgz -X POST -T - >&2
+        ) 4>&1 |
+        aws s3 cp - s3://${AWS_S3_BACKUP_BUCKET}/${APP_NAME}-backup-${HOSTNAME}-${date}.tgz
+        curl -k -s -H "X-AUTH-TOKEN: ${WAREHOUSE_DATA_HOARDER_TOKEN}" https://${WAREHOUSE_DATA_HOARDER_HOST}:7410/blobs/ |
+        sed 's/,/\n/g' |
+        grep ${HOSTNAME} |
+        sort |
+        head -n-${BACKUP_COUNT:-1} |
+        sed 's/.*: \?"\(.*\)".*/\1/' |
+        while read file
+        do
+          curl -k -H "X-AUTH-TOKEN: ${WAREHOUSE_DATA_HOARDER_TOKEN}" https://${WAREHOUSE_DATA_HOARDER_HOST}:7410/blobs/${file} -X DELETE
+          aws s3 rm s3://${AWS_S3_BACKUP_BUCKET}/${APP_NAME}-${file}
+        done
